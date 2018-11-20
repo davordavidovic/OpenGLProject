@@ -1,10 +1,10 @@
 /*********************************************************
-FILE : main.cpp (csci3260 2018-2019 Assignment 2)
+FILE : main.cpp (csci3260 2018-2019 Final Project)
 *********************************************************/
 /*********************************************************/
-/*Student Information
-Student ID: 1155123101
-Student Name: Davor Davidovikj
+/*Students Information
+Student ID: 1155123101					Student ID: ________	
+Student Name: Davor Davidovikj			Student Name: ___________
 *********************************************************/
 
 #ifdef _MSC_VER
@@ -27,10 +27,11 @@ using namespace std;
 using glm::vec3;
 using glm::mat4;
 
+
 glm::mat4 temp = glm::mat4(1.0f); //a utility identity matrix
 float sceneRotate = 0.0f, blockRotate = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
-float diff = -1.0f, spec = 10.f, amb = 1.0f; //macros for diffuse and specular brightness
+float diff = -1.0f, spec = 10.f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
 bool leftTurn = true, rightTurn=false, upTurn=false, downTurn = false; //macros for car movement
 float lightx = 0.0f; //macro for light position movement
@@ -40,10 +41,11 @@ float anglex = 0.0f, angley = 0.0f;
 float lx = 0.0f, ly = 0.0f; //move factor of camera
 int i = 3;
 bool flag = true, space = true;
-GLuint jeepVAO, planeVAO, blockVAO, cubeVAO;
+GLuint spaceCraftVAO, earthVAO, cubeVAO;
 GLuint texture[8]; //array of used textures
 int drawsize[5];
 GLint programID, skyboxProgramID; //two programs used
+
 
 bool checkStatus(
 	GLuint objectID,
@@ -156,98 +158,17 @@ void installShaders()
 	glDeleteShader(skyboxFragmentShaderID);
 } //installing custom made shaders 
 
-void specialKeboardFunc(int key, int x, int y) { //dealing with car movement here
-	switch (key)
-	{
-	case GLUT_KEY_UP:
-		if (!upTurn) {
-			upTurn = true;
-			if (leftTurn) {
-				rotateFactor -= M_PI / 2;
-				leftTurn = false;
-			}else if (rightTurn) {
-				rotateFactor += M_PI / 2;
-				rightTurn = false;
-			}else if(downTurn) {
-				rotateFactor += M_PI;
-				downTurn = false;
-			}
-		}
-		if (objMoveZ < 6) {
-			objMoveZ += 0.5;
-		}
-		break;
-	case GLUT_KEY_DOWN:
-		if (!downTurn) {
-			downTurn = true;
-			if (leftTurn) {
-				rotateFactor += M_PI / 2;
-				leftTurn = false;
-			}
-			else if (rightTurn) {
-				rotateFactor -= M_PI / 2;
-				rightTurn = false;
-			}
-			else if (upTurn) {
-				rotateFactor += M_PI;
-				upTurn = false;
-			}
-		}
-		if (objMoveZ > -7) {
-			objMoveZ -= 0.5;
-		}
-		break;
-	case GLUT_KEY_LEFT:
-		if (!leftTurn) {
-			leftTurn = true;
-			if (downTurn) {
-				rotateFactor -= M_PI / 2;
-				downTurn = false;
-			}
-			else if (rightTurn) {
-				rotateFactor -= M_PI;
-				rightTurn = false;
-			}
-			else if (upTurn) {
-				rotateFactor += M_PI / 2;
-				upTurn = false;
-			}
-		}
-		if (objMoveX < 11.4) {
-			objMoveX += 0.5;
-		}
-		break;
-	case GLUT_KEY_RIGHT:
-		if (!rightTurn) {
-			rightTurn = true;
-			if (downTurn) {
-				rotateFactor += M_PI / 2;
-				downTurn = false;
-			}
-			else if (leftTurn) {
-				rotateFactor += M_PI;
-				leftTurn = false;
-			}
-			else if (upTurn) {
-				rotateFactor -= M_PI / 2;
-				upTurn = false;
-			}
-		}
-		if (objMoveX > -12) {
-			objMoveX -= 0.5;
-		}
-		break;
-	}
+void specialKeboardFunc(int key, int x, int y) {
 
-	//az from -28-3 to -28+6.5
-	//ax from 11.4 to -12
-} //dealing with car movement here
+
+} 
 
 void keyboard(unsigned char key, int x, int y)
 {
 	if (key == 'a' || key == 'A')
 	{
 		sceneRotate -= 0.03f;
+		cout << sceneRotate;
 	}
 	if (key == 'd' || key == 'D')
 	{
@@ -255,11 +176,12 @@ void keyboard(unsigned char key, int x, int y)
 	}
 	if (key == 'c' || key == 'C')
 	{
-		lightx -= 0.05f;
+		lightx -= 50.0f;
+		cout << lightx;
 	}
 	if (key == 'v' || key == 'V')
 	{
-		lightx += 0.05f;
+		lightx += 50.0f;
 	}
 	if (key == 'q' || key == 'Q')
 	{
@@ -274,27 +196,21 @@ void keyboard(unsigned char key, int x, int y)
 		}
 
 	}
-	if (key == 's' || key == 'S')
-	{
-		flag = !flag;
 
-	}
 	if (key == 'z' || key == 'Z')
 	{
 		spec += 1;
 	}
 	if (key == 'm' || key == 'M')
 	{
-		if (amb < 1) {
-			amb += 0.1f;
-		}
+
+		amb += 0.1f;
 		
 	}
 	if (key == 'n' || key == 'N')
 	{
-		if (amb > 0) {
-			amb -= 0.1f;
-		}
+		amb -= 0.1f;
+		
 	}
 	if (key == 'x' || key == 'X')
 	{
@@ -303,18 +219,7 @@ void keyboard(unsigned char key, int x, int y)
 		}
 
 	}
-	if (key == '1') {
-		i = 3;
-	}
-	if (key == '2') {
-		i = 4;
-	}
-	if (key == '3') {
-		i = 5;
-	}
-	if (key == ' ') {
-		space = !space;
-	}
+
 
 }
 
@@ -449,7 +354,6 @@ bool loadOBJ(
 
 	return true;
 }
-
 
 GLuint loadCubemap(vector<std::string> faces)
 {
@@ -637,35 +541,15 @@ void createSkybox() {
 
 	vector<std::string> faces1
 	{
-		"right.jpg",
-			"left.jpg",
-			"top.jpg",
-			"bottom.jpg",
-			"front.jpg",
-			"back.jpg"
-	};
-	vector<std::string> faces2
-	{
-		"posx.jpg",
-			"negx.jpg",
-			"posy.jpg",
-			"negy.jpg",
-			"posz.jpg",
-			"negz.jpg"
-	};
-	vector<std::string> faces3
-	{
-		"blood_rt.tga",
-			"blood_lf.tga",
-			"blood_up.tga",
-			"blood_dn.tga",
-			"blood_ft.tga",
-			"blood_bk.tga"
+		"purplenebula_rt.jpg",
+		"purplenebula_lf.jpg",
+		"purplenebula_up.jpg",
+		"purplenebula_dn.jpg",
+		"purplenebula_ft.jpg",
+		"purplenebula_bk.jpg"
 	};
 
 	texture[3] = loadCubemap(faces1);
-	texture[4] = loadCubemap(faces2);
-	texture[5] = loadCubemap(faces3);
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
 
@@ -681,20 +565,40 @@ void createSkybox() {
 void sendDataToOpenGL()
 {
 	createSkybox();
-	dataFunc("jeep.obj", "jeep_texture.bmp", jeepVAO, 0, 0);
-	dataFunc("plane.obj", "monopoly.bmp", planeVAO, 1, 1);
-	dataFunc("block.obj", "quartz.bmp", blockVAO, 2, 2);
+	dataFunc("spaceCraft.obj", "./texture/spacecraftTexture.bmp", spaceCraftVAO, 0, 0);
+	dataFunc("planet.obj", "./texture/earthTexture.bmp", earthVAO, 1, 1);
 }
 
-void paintGL(void)
-{	
+void initializeLighting() {
+
+	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight");
+	vec3 ambientLight(1.0f, 1.0f, 1.0f);
+	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+
+	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
+	vec3 eyePosition(1.0f, 1.0f, 1.0f);
+	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
+
+	GLint lightPositionUniformLocation = glGetUniformLocation(programID, "lightPositionWorld");
+	vec3 lightPosition(lightx, 1.0f, -3.0f);
+	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+
+	GLint diffuseBrightness = glGetUniformLocation(programID, "diffuseBrightness");
+	glUniform1f(diffuseBrightness, diff);
+
+	GLint specularBrightness = glGetUniformLocation(programID, "specularBrightness");
+	glUniform1f(specularBrightness, spec);
+
+}
+
+void initializeSkybox() {
 	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
-	glm::mat4 skyboxModel = glm::rotate(temp, sceneRotate, glm::vec3(0, 1, 0));
 	glm::mat4 skyboxView = glm::lookAt(
 		glm::vec3(0.1f, 0, 0), // coordinates of camera
 		glm::vec3(0, 0, 0), // camera looks at origin
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
+	glm::mat4 skyboxModel = glm::rotate(temp, sceneRotate, glm::vec3(0, 1, 0));
 
 	glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgramID);
@@ -713,12 +617,51 @@ void paintGL(void)
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
-	glDisable(GL_CULL_FACE);
+}
+
+void paintGL(void)
+{	
+	//initializeSkybox();
+
+	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
+	glm::mat4 skyboxView = glm::lookAt(
+		glm::vec3(0.1f, 0, 0), // coordinates of camera
+		glm::vec3(0, 0, 0), // camera looks at origin
+		glm::vec3(0, 1, 0)  // head is straight up
+	);
+	glm::mat4 skyboxModel = glm::rotate(temp, amb, glm::vec3(0, 1, 0));
+
+	glDepthMask(GL_FALSE);
+	glUseProgram(skyboxProgramID);
+
+	GLint skyboxProjectionMatrix = glGetUniformLocation(skyboxProgramID, "proj");
+	glUniformMatrix4fv(skyboxProjectionMatrix, 1, GL_FALSE, &skyboxProj[0][0]);
+
+	GLint skyboxViewMatrix = glGetUniformLocation(skyboxProgramID, "view");
+	glUniformMatrix4fv(skyboxViewMatrix, 1, GL_FALSE, &skyboxView[0][0]);
+
+	GLint skyboxModelMatrix = glGetUniformLocation(skyboxProgramID, "model");
+	glUniformMatrix4fv(skyboxModelMatrix, 1, GL_FALSE, &skyboxModel[0][0]);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
+	glBindVertexArray(cubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthMask(GL_TRUE);
+
+	glEnable(GL_DEPTH_TEST); 
+	glEnable(GL_LINE_SMOOTH);
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_POLYGON_SMOOTH);
+	glDepthFunc(GL_LESS);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
 	glUseProgram(programID);
+	initializeLighting(); //creates all lighting 
 	glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0, -3), // coordinates of camera
-		glm::vec3(lx, 0+ly, 0), // camera looks at
+		glm::vec3(sceneRotate, 0, -3), // coordinates of camera
+		glm::vec3(sceneRotate, 0, 0), // camera looks at
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
 
@@ -735,60 +678,30 @@ void paintGL(void)
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1,
 		GL_FALSE, &View[0][0]);
 
-	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight");
-	vec3 ambientLight(amb, amb, amb);
-	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
-
-	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
-	vec3 eyePosition(1.0f, 1.0f, 1.0f);
-	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
-
-	GLint lightPositionUniformLocation = glGetUniformLocation(programID, "lightPositionWorld");
-	vec3 lightPosition(lightx, 1.0f, -3.0f);
-	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
-
-	GLint diffuseBrightness = glGetUniformLocation(programID, "diffuseBrightness");
-	glUniform1f(diffuseBrightness, diff);
-
-	GLint specularBrightness = glGetUniformLocation(programID, "specularBrightness");
-	glUniform1f(specularBrightness, spec);
-
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glBindVertexArray(planeVAO);
-	glm::mat4 ModelPlane = glm::scale(temp, glm::vec3(0.1f, 0.1f, 0.1f));
-	ModelPlane = glm::rotate(ModelPlane, -0.6f, glm::vec3(1, 0, 0));
-	ModelPlane = glm::translate(ModelPlane, glm::vec3(0.0f, 0.0f, -12.2f));
-	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
-		GL_FALSE, &ModelPlane[0][0]);
+	glBindVertexArray(earthVAO);
+
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
+
+	glm::mat4 ModelEarth = glm::scale(temp, glm::vec3(1.0f, 1.0f, 1.0f));
+	ModelEarth = glm::translate(skyboxModel, glm::vec3(-20.0f, 0.0f, 0.0f));
+	//ModelEarth = glm::rotate(ModelEarth, sceneRotate, glm::vec3(0, 0, 1));
+	ModelEarth = glm::rotate(ModelEarth, (float)M_PI/2, glm::vec3(1, 0, 0));
+	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelEarth[0][0]);
+
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
 
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
-	glBindVertexArray(jeepVAO);
-	glm::mat4 ModelObject = glm::scale(temp, glm::vec3(0.05f, 0.05f, 0.05f));
-	ModelObject = glm::rotate(ModelObject, -0.6f, glm::vec3(1, 0, 0));
-	ModelObject = glm::translate(ModelObject, glm::vec3(objMoveX, 0.0f, -24.0f + objMoveZ));
-	ModelObject = glm::rotate(ModelObject, rotateFactor, glm::vec3(0, 1, 0));
+	glBindVertexArray(spaceCraftVAO);
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
+	glm::mat4 ModelObject = glm::scale(temp, glm::vec3(0.0015f, 0.0015f, 0.0015f));
+	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, -1000.0f, 0.0f));
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &ModelObject[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[0]);
 
-	glm::mat4 ModelBlock = glm::scale(temp, glm::vec3(1.0f, 1.0f, 1.0f));
-	ModelBlock = glm::rotate(ModelBlock, -0.6f, glm::vec3(1, 0, 0));
-	ModelBlock = glm::translate(ModelBlock, glm::vec3(0.0f, -10.0f, -3.5f));
-	ModelBlock = glm::rotate(ModelBlock, blockRotate, glm::vec3(0, 1, 0));
-	ModelBlock = glm::translate(ModelBlock, vec3(0.0f, 0.0f, 15.0f));
-	ModelBlock = glm::rotate(ModelBlock, blockRotate, glm::vec3(1, 1, 0));
-	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
-		GL_FALSE, &ModelBlock[0][0]);
 
-	glBindTexture(GL_TEXTURE_2D, texture[2]);
-	glBindVertexArray(blockVAO);
-	glDrawArrays(GL_TRIANGLES, 0, drawsize[2]);
-
-	if (flag) {
-		blockRotate += 0.0005f;
-	}
 	glFlush();
 	glutPostRedisplay();
 }
