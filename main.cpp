@@ -33,13 +33,12 @@ float sceneRotate = 0.0f, blockRotate = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
 float diff = -1.0f, spec = 10.f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
-bool leftTurn = true, rightTurn=false, upTurn=false, downTurn = false; //macros for car movement
 float lightx = 0.0f; //macro for light position movement
-float rotateFactor = 0.0f;
+float earthRotate = 0.0f;
 int orgnx = -1, orgny = -1;
+int objIndex = 1, texIndex = 1;
 float anglex = 0.0f, angley = 0.0f;
 float lx = 0.0f, ly = 0.0f; //move factor of camera
-int i = 3;
 bool flag = true, space = true;
 GLuint spaceCraftVAO, earthVAO, cubeVAO;
 GLuint texture[8]; //array of used textures
@@ -448,14 +447,12 @@ GLuint loadBMP_custom(const char * imagepath) {
 
 }
 
-void dataFunc(const char * objectName, const char * textureName, GLuint &vao, int objectIndex, int textureIndex) {
-
+void dataFunc(const char * objectName, const char * textures[], GLuint &vao) {
 	std::vector< glm::vec3 > vertices;
 	std::vector< glm::vec2 > uvs;
 	std::vector< glm::vec3 > normals; // Won't be used at the moment.
 
 	bool res = loadOBJ(objectName, vertices, uvs, normals);
- 
 
 	GLuint vertexbuffer, uvbuffer, normalbuffer;
 
@@ -468,28 +465,29 @@ void dataFunc(const char * objectName, const char * textureName, GLuint &vao, in
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	if (textureName != "none") {
-		texture[textureIndex] = loadBMP_custom(textureName);
+	for (int i = 0; textures[i] != NULL; i++) {
+		texture[texIndex] = loadBMP_custom(textures[i]);
 
 		glGenBuffers(1, &uvbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 		glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		texIndex++;
+		cout << i;
 	}
+
 	glGenBuffers(1, &normalbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	drawsize[objectIndex] = vertices.size();
-
-	/*glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);*/
+	drawsize[objIndex] = vertices.size();
+	objIndex++;
 
 }
+
 
 void createSkybox() {
 
@@ -545,11 +543,11 @@ void createSkybox() {
 		"purplenebula_lf.jpg",
 		"purplenebula_up.jpg",
 		"purplenebula_dn.jpg",
-		"purplenebula_ft.jpg",
-		"purplenebula_bk.jpg"
+		"purplenebula_bk.jpg",
+		"purplenebula_ft.jpg"
 	};
 
-	texture[3] = loadCubemap(faces1);
+	texture[0] = loadCubemap(faces1);
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
 
@@ -565,8 +563,13 @@ void createSkybox() {
 void sendDataToOpenGL()
 {
 	createSkybox();
-	dataFunc("spaceCraft.obj", "./texture/spacecraftTexture.bmp", spaceCraftVAO, 0, 0);
-	dataFunc("planet.obj", "./texture/earthTexture.bmp", earthVAO, 1, 1);
+	//dataFunc("spaceCraft.obj", "./texture/spacecraftTexture.bmp", spaceCraftVAO, 0, 0);
+	//dataFunc("planet.obj", "./texture/earthTexture.bmp", earthVAO, 1, 1);
+	const char * spacecraft[] = { "./texture/spacecraftTexture.bmp", NULL };
+	dataFunc("spaceCraft.obj", spacecraft, spaceCraftVAO);
+
+	const char * earth[] = { "./texture/earthTexture.bmp", "./texture/earth_normal.bmp", NULL };
+	dataFunc("planet.obj", earth, earthVAO);
 }
 
 void initializeLighting() {
@@ -613,7 +616,7 @@ void initializeSkybox() {
 	glUniformMatrix4fv(skyboxModelMatrix, 1, GL_FALSE, &skyboxModel[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[0]);
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
@@ -643,8 +646,7 @@ void paintGL(void)
 	GLint skyboxModelMatrix = glGetUniformLocation(skyboxProgramID, "model");
 	glUniformMatrix4fv(skyboxModelMatrix, 1, GL_FALSE, &skyboxModel[0][0]);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[0]);
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
@@ -678,20 +680,31 @@ void paintGL(void)
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1,
 		GL_FALSE, &View[0][0]);
 
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glBindVertexArray(earthVAO);
+	GLuint TextureID_0 = glGetUniformLocation(programID, "textureSampler");
+	GLuint TextureID_1 = glGetUniformLocation(programID, "textureSampler_2");
 
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
 
 	glm::mat4 ModelEarth = glm::scale(temp, glm::vec3(1.0f, 1.0f, 1.0f));
 	ModelEarth = glm::translate(skyboxModel, glm::vec3(-20.0f, 0.0f, 0.0f));
-	//ModelEarth = glm::rotate(ModelEarth, sceneRotate, glm::vec3(0, 0, 1));
-	ModelEarth = glm::rotate(ModelEarth, (float)M_PI/2, glm::vec3(1, 0, 0));
+	ModelEarth = glm::rotate(ModelEarth, earthRotate, glm::vec3(0, 1, 0));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelEarth[0][0]);
 
-	glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture[2]);
+	glUniform1i(TextureID_0, 0);
 
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture[3]);
+	glUniform1i(TextureID_1, 1);
+
+	glBindVertexArray(earthVAO);
+
+	glDrawArrays(GL_TRIANGLES, 0, drawsize[2]);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture[1]);
+	glUniform1i(TextureID_0, 0);
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
 	glm::mat4 ModelObject = glm::scale(temp, glm::vec3(0.0015f, 0.0015f, 0.0015f));
@@ -699,8 +712,9 @@ void paintGL(void)
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &ModelObject[0][0]);
-	glDrawArrays(GL_TRIANGLES, 0, drawsize[0]);
+	glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
 
+	earthRotate += 0.001f;
 
 	glFlush();
 	glutPostRedisplay();
@@ -720,7 +734,7 @@ int main(int argc, char *argv[])
 	glutInitDisplayMode(GLUT_RGBA);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Assignment 2");
+	glutCreateWindow("Final Project");
 
 	initializedGL();
 	glutDisplayFunc(paintGL);
