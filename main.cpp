@@ -3,8 +3,8 @@ FILE : main.cpp (csci3260 2018-2019 Final Project)
 *********************************************************/
 /*********************************************************/
 /*Students Information
-Student ID: 1155123101					Student ID: ________
-Student Name: Davor Davidovikj			Student Name: ___________
+Student ID: 1155123101					Student ID: 1155059798
+Student Name: Davor Davidovikj			Student Name: Chu Chao Ying
 *********************************************************/
 
 #ifdef _MSC_VER
