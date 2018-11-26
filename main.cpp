@@ -3,7 +3,7 @@ FILE : main.cpp (csci3260 2018-2019 Final Project)
 *********************************************************/
 /*********************************************************/
 /*Students Information
-Student ID: 1155123101					Student ID: ________	
+Student ID: 1155123101					Student ID: ________
 Student Name: Davor Davidovikj			Student Name: ___________
 *********************************************************/
 
@@ -20,9 +20,12 @@ Student Name: Davor Davidovikj			Student Name: ___________
 #include <fstream>
 #include <vector>
 #include <string>
+#include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION 
 #include "stb_image.h" //image loader for skybox .tga images
 #define M_PI 3.1415926535897932384626433832795 //pi for rotations
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 using namespace std;
 using glm::vec3;
 using glm::mat4;
@@ -33,7 +36,7 @@ float sceneRotate = 0.0f, blockRotate = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
 float diff = -1.0f, spec = 10.f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
-bool leftTurn = true, rightTurn=false, upTurn=false, downTurn = false; //macros for car movement
+bool leftTurn = true, rightTurn = false, upTurn = false, downTurn = false; //macros for car movement
 float lightx = 0.0f; //macro for light position movement
 float rotateFactor = 0.0f;
 int orgnx = -1, orgny = -1;
@@ -46,6 +49,12 @@ GLuint texture[8]; //array of used textures
 int drawsize[5];
 GLint programID, skyboxProgramID; //two programs used
 
+//spacecraft's left/right rotation
+float sc_angle = 0.0f;
+
+// TODO: debug bump mapping
+GLuint TextureID_0;
+GLuint TextureID_1;
 
 bool checkStatus(
 	GLuint objectID,
@@ -158,10 +167,10 @@ void installShaders()
 	glDeleteShader(skyboxFragmentShaderID);
 } //installing custom made shaders 
 
-void specialKeboardFunc(int key, int x, int y) {
+void specialKeyboardFunc(int key, int x, int y) {
 
 
-} 
+}
 
 void keyboard(unsigned char key, int x, int y)
 {
@@ -205,12 +214,12 @@ void keyboard(unsigned char key, int x, int y)
 	{
 
 		amb += 0.1f;
-		
+
 	}
 	if (key == 'n' || key == 'N')
 	{
 		amb -= 0.1f;
-		
+
 	}
 	if (key == 'x' || key == 'X')
 	{
@@ -245,6 +254,15 @@ void move(int button, int state, int x, int y)
 
 void PassiveMouse(int x, int y)
 {
+	//determine direction and magnitude of spacecraft's left/right rotation
+	//by tracing positon of cursor relative to window's central vertical line
+	sc_angle = -(x - SCREEN_WIDTH / 2);
+	//scale down rotation magnitude so that a small mouse movement will not
+	//result in a big rotation
+	sc_angle /= 50;
+	//restrict range of angles the spacecraft can take
+	sc_angle = std::max(-45.0f, std::min(sc_angle, 45.0f));
+
 	// if satement entered only when left button is pressed
 	if (orgnx >= 0 && orgny >= 0) {
 
@@ -408,9 +426,9 @@ GLuint loadBMP_custom(const char * imagepath) {
 		printf("Not a correct BMP file\n");
 		return 0;
 	}
-	if (*(int*)&(header[0x1E]) != 0) { 
-		printf("Not a correct BMP file\n");    
-		return 0; 
+	if (*(int*)&(header[0x1E]) != 0) {
+		printf("Not a correct BMP file\n");
+		return 0;
 	}
 	if (*(int*)&(header[0x1C]) != 24) { printf("Not a correct BMP file\n");    return 0; }
 
@@ -455,7 +473,7 @@ void dataFunc(const char * objectName, const char * textureName, GLuint &vao, in
 	std::vector< glm::vec3 > normals; // Won't be used at the moment.
 
 	bool res = loadOBJ(objectName, vertices, uvs, normals);
- 
+
 
 	GLuint vertexbuffer, uvbuffer, normalbuffer;
 
@@ -494,7 +512,7 @@ void dataFunc(const char * objectName, const char * textureName, GLuint &vao, in
 void createSkybox() {
 
 	float cube[] = {
-		         
+
 		-1.0f,  1.0f, -1.0f,
 		-1.0f, -1.0f, -1.0f,
 		 1.0f, -1.0f, -1.0f,
@@ -567,6 +585,10 @@ void sendDataToOpenGL()
 	createSkybox();
 	dataFunc("spaceCraft.obj", "./texture/spacecraftTexture.bmp", spaceCraftVAO, 0, 0);
 	dataFunc("planet.obj", "./texture/earthTexture.bmp", earthVAO, 1, 1);
+	texture[2] = loadBMP_custom("./texture/earth_normal.bmp");
+	TextureID_0 = glGetUniformLocation(programID, "textureSampler");
+	TextureID_1 = glGetUniformLocation(programID, "textureSampler2");
+
 }
 
 void initializeLighting() {
@@ -620,8 +642,12 @@ void initializeSkybox() {
 }
 
 void paintGL(void)
-{	
+{
 	//initializeSkybox();
+	GLint hasNormalMappingUniformLocation = glGetUniformLocation(programID, "hasNormalMapping");
+	glUniform1i(hasNormalMappingUniformLocation, 0);
+	//-------------------------------------------------------------
+	//skybox
 
 	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 skyboxView = glm::lookAt(
@@ -629,7 +655,7 @@ void paintGL(void)
 		glm::vec3(0, 0, 0), // camera looks at origin
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
-	glm::mat4 skyboxModel = glm::rotate(temp, amb, glm::vec3(0, 1, 0));
+	glm::mat4 skyboxModel = glm::rotate(temp, amb, glm::vec3(0, 1, 0)); //why use lighting parameter as angle??
 
 	glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgramID);
@@ -647,9 +673,13 @@ void paintGL(void)
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	//-------------------------------------------------------------
+	//initializations
+
 	glDepthMask(GL_TRUE);
 
-	glEnable(GL_DEPTH_TEST); 
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_POLYGON_SMOOTH);
@@ -678,29 +708,50 @@ void paintGL(void)
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1,
 		GL_FALSE, &View[0][0]);
 
+	//-------------------------------------------------------------
+	//earth
+
+	//TODO: bump mapping
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
+	glUniform1i(TextureID_0, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture[2]);
+	glUniform1i(TextureID_1, 1);
+
 	glBindVertexArray(earthVAO);
+
+	glUniform1i(hasNormalMappingUniformLocation, 1);
 
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
 
 	glm::mat4 ModelEarth = glm::scale(temp, glm::vec3(1.0f, 1.0f, 1.0f));
-	ModelEarth = glm::translate(skyboxModel, glm::vec3(-20.0f, 0.0f, 0.0f));
-	//ModelEarth = glm::rotate(ModelEarth, sceneRotate, glm::vec3(0, 0, 1));
-	ModelEarth = glm::rotate(ModelEarth, (float)M_PI/2, glm::vec3(1, 0, 0));
+	ModelEarth = glm::translate(skyboxModel, glm::vec3(-10.0f, 0.0f, 0.0f));
+	ModelEarth = glm::rotate(ModelEarth, glm::radians(10.0f), glm::vec3(0, 0, 1));
+	ModelEarth = glm::rotate(ModelEarth, (float)M_PI / 2, glm::vec3(1, 0, 0));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelEarth[0][0]);
 
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
 
+	//-------------------------------------------------------------
+	//spacecraft
+
+	glUniform1i(hasNormalMappingUniformLocation, 0);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
+
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
+
 	glm::mat4 ModelObject = glm::scale(temp, glm::vec3(0.0015f, 0.0015f, 0.0015f));
 	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, -1000.0f, 0.0f));
+	ModelObject = glm::rotate(ModelObject, glm::radians(sc_angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
 		GL_FALSE, &ModelObject[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[0]);
 
+	//-------------------------------------------------------------
 
 	glFlush();
 	glutPostRedisplay();
@@ -718,17 +769,17 @@ int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Assignment 2");
 
 	initializedGL();
 	glutDisplayFunc(paintGL);
 
-	glutSpecialFunc(specialKeboardFunc);
+	glutSpecialFunc(specialKeyboardFunc);
 	glutKeyboardFunc(keyboard);
 	glutMouseFunc(move);
-	glutMotionFunc(PassiveMouse);
+	glutPassiveMotionFunc(PassiveMouse);
 
 	glutMainLoop();
 
