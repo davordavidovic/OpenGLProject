@@ -32,19 +32,21 @@ using glm::mat4;
 
 
 glm::mat4 temp = glm::mat4(1.0f); //a utility identity matrix
-float sceneRotate = 0.0f, blockRotate = 0.0f;
+float sceneRotate = 0.0f, ringRotate = 0.0f, rockRotate = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
-float diff = -1.0f, spec = 10.f, amb = 0.0f; //macros for diffuse and specular brightness
+float diff = -0.5f, spec = 100.0f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
-bool leftTurn = true, rightTurn = false, upTurn = false, downTurn = false; //macros for car movement
+//bool[] shipRing  = ;
+bool shipRing[5] = {false};
+
 float lightx = 0.0f; //macro for light position movement
 float rotateFactor = 0.0f;
 int orgnx = -1, orgny = -1;
 float anglex = 0.0f, angley = 0.0f;
 float lx = 0.0f, ly = 0.0f; //move factor of camera
-int i = 3;
+
 bool flag = true, space = true;
-GLuint spaceCraftVAO, earthVAO, cubeVAO, wonderStarVAO, ringVAO;
+GLuint spaceCraftVAO, earthVAO, cubeVAO, wonderStarVAO, ringVAO, rockVAO;
 GLuint texture[8]; //array of used textures
 int drawsize[8];
 GLint programID, skyboxProgramID; //two programs used
@@ -170,20 +172,20 @@ void installShaders()
 void specialKeyboardFunc(int key, int x, int y) {
 
 	if (key == GLUT_KEY_UP) {
-		objMoveX += cos(sc_angle)*0.1f;
-		objMoveZ += sin(sc_angle)*0.1f;
+		objMoveX += cos(sc_angle)*0.05f;
+		objMoveZ += sin(sc_angle)*0.05f;
 	}
 	else if (key == GLUT_KEY_DOWN) {
-		objMoveX -= cos(sc_angle)*0.1f;
-		objMoveZ -= sin(sc_angle)*0.1f;
+		objMoveX -= cos(sc_angle)*0.05f;
+		objMoveZ -= sin(sc_angle)*0.05f;
 	}
 	else if (key == GLUT_KEY_LEFT) {
-		objMoveX += sin(sc_angle)*0.1f;
-		objMoveZ -= cos(sc_angle)*0.1f;
+		objMoveX += sin(sc_angle)*0.05f;
+		objMoveZ -= cos(sc_angle)*0.05f;
 	}
 	else if (key == GLUT_KEY_RIGHT) {
-		objMoveX -= sin(sc_angle)*0.1f;
-		objMoveZ += cos(sc_angle)*0.1f;
+		objMoveX -= sin(sc_angle)*0.05f;
+		objMoveZ += cos(sc_angle)*0.05f;
 	}
 	
 
@@ -193,12 +195,12 @@ void keyboard(unsigned char key, int x, int y)
 {
 	if (key == 'a' || key == 'A')
 	{
-		sceneRotate -= 0.03f;
+		sceneRotate -= 1.0f;
 		cout << sceneRotate;
 	}
 	if (key == 'd' || key == 'D')
 	{
-		sceneRotate += 0.03f;
+		sceneRotate += 1.0f;
 	}
 	if (key == 'c' || key == 'C')
 	{
@@ -230,12 +232,12 @@ void keyboard(unsigned char key, int x, int y)
 	if (key == 'm' || key == 'M')
 	{
 
-		amb += 0.1f;
+		amb += 0.01f;
 
 	}
 	if (key == 'n' || key == 'N')
 	{
-		amb -= 0.1f;
+		amb -= 0.01f;
 
 	}
 	if (key == 'x' || key == 'X')
@@ -280,17 +282,6 @@ void PassiveMouse(int x, int y)
 	//restrict range of angles the spacecraft can take
 	sc_angle = std::max(-45.0f, std::min(sc_angle, 45.0f));
 
-	// if satement entered only when left button is pressed
-	if (orgnx >= 0 && orgny >= 0) {
-
-		// updated the value of mMover
-		mMoverx = (x - orgnx) * 0.05f;
-		mMovery = (y - orgny) * 0.05f;
-
-		// update camera's direction
-		lx = anglex - mMoverx;
-		ly = angley - mMovery; //lz not used in this program but can be used for camera movement in z direciton
-	}
 
 }
 
@@ -530,47 +521,47 @@ void createSkybox() {
 
 	float cube[] = {
 
-		-10.0f,  10.0f, -10.0f,
-		-10.0f, -10.0f, -10.0f,
-		 10.0f, -10.0f, -10.0f,
-		 10.0f, -10.0f, -10.0f,
-		 10.0f,  10.0f, -10.0f,
-		-10.0f,  10.0f, -10.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
 
-		-10.0f, -10.0f,  10.0f,
-		-10.0f, -10.0f, -10.0f,
-		-10.0f,  10.0f, -10.0f,
-		-10.0f,  10.0f, -10.0f,
-		-10.0f,  10.0f,  10.0f,
-		-10.0f, -10.0f,  10.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
 
-		 10.0f, -10.0f, -10.0f,
-		 10.0f, -10.0f,  10.0f,
-		 10.0f,  10.0f,  10.0f,
-		 10.0f,  10.0f,  10.0f,
-		 10.0f,  10.0f, -10.0f,
-		 10.0f, -10.0f, -10.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
 
-		-10.0f, -10.0f,  10.0f,
-		-10.0f,  10.0f,  10.0f,
-		 10.0f,  10.0f,  10.0f,
-		 10.0f,  10.0f,  10.0f,
-		 10.0f, -10.0f,  10.0f,
-		-10.0f, -10.0f,  10.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
 
-		-10.0f,  10.0f, -10.0f,
-		 10.0f,  10.0f, -10.0f,
-		 10.0f,  10.0f,  10.0f,
-		 10.0f,  10.0f,  10.0f,
-		-10.0f,  10.0f,  10.0f,
-		-10.0f,  10.0f, -10.0f,
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
 
-		-10.0f, -10.0f, -10.0f,
-		-10.0f, -10.0f,  10.0f,
-		 10.0f, -10.0f, -10.0f,
-		 10.0f, -10.0f, -10.0f,
-		-10.0f, -10.0f,  10.0f,
-		 10.0f, -10.0f,  10.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
 	};
 
 
@@ -601,10 +592,12 @@ void sendDataToOpenGL()
 {
 	createSkybox();
 	dataFunc("spaceCraft.obj", "./texture/spacecraftTexture.bmp", spaceCraftVAO, 0, 0);
+	texture[2] = loadBMP_custom("./texture/earth_normal.bmp");
 	dataFunc("planet.obj", "./texture/earthTexture.bmp", earthVAO, 1, 1);
 	dataFunc("planet.obj", "./texture/WonderStarTexture.bmp", wonderStarVAO, 4, 4);
 	dataFunc("Ring.obj", "./texture/ringTexture.bmp", ringVAO, 5, 5);
-	texture[2] = loadBMP_custom("./texture/earth_normal.bmp");
+	texture[6] = loadBMP_custom("./texture/greenhair.bmp");
+	dataFunc("rock.obj", "./texture/RockTexture.bmp", rockVAO, 7, 7);
 	TextureID_0 = glGetUniformLocation(programID, "textureSampler");
 	TextureID_1 = glGetUniformLocation(programID, "textureSampler2");
 
@@ -613,7 +606,7 @@ void sendDataToOpenGL()
 void initializeLighting() {
 
 	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight");
-	vec3 ambientLight(1.0f, 1.0f, 1.0f);
+	vec3 ambientLight(0.6f, 0.6f, 0.6f);
 	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
 
 	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
@@ -632,51 +625,23 @@ void initializeLighting() {
 
 }
 
-void initializeSkybox() {
-	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
-	glm::mat4 skyboxView = glm::lookAt(
-		glm::vec3(0, 0, 0), // coordinates of camera
-		glm::vec3(0, 0, 0), // camera looks at origin
-		glm::vec3(0, 1, 0)  // head is straight up
-	);
-	glm::mat4 skyboxModel = glm::rotate(temp, sceneRotate, glm::vec3(0, 1, 0));
-
-	glDepthMask(GL_FALSE);
-	glUseProgram(skyboxProgramID);
-
-	GLint skyboxProjectionMatrix = glGetUniformLocation(skyboxProgramID, "proj");
-	glUniformMatrix4fv(skyboxProjectionMatrix, 1, GL_FALSE, &skyboxProj[0][0]);
-
-	GLint skyboxViewMatrix = glGetUniformLocation(skyboxProgramID, "view");
-	glUniformMatrix4fv(skyboxViewMatrix, 1, GL_FALSE, &skyboxView[0][0]);
-
-	GLint skyboxModelMatrix = glGetUniformLocation(skyboxProgramID, "model");
-	glUniformMatrix4fv(skyboxModelMatrix, 1, GL_FALSE, &skyboxModel[0][0]);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
-	glBindVertexArray(cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glDepthMask(GL_TRUE);
-}
 
 void paintGL(void)
 {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	//initializeSkybox();
 	GLint hasNormalMappingUniformLocation = glGetUniformLocation(programID, "hasNormalMapping");
 	glUniform1i(hasNormalMappingUniformLocation, 0);
+
 	//-------------------------------------------------------------
 	//skybox
-
 	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 skyboxView = glm::lookAt(
 		glm::vec3(0.1f, 0, 0), // coordinates of camera
 		glm::vec3(0, 0, 0), // camera looks at origin
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
-	//glm::mat4 skyboxModel = glm::translate(temp, glm::vec3(0, 0, 0)); //why use lighting parameter as angle??
-	glm::mat4 skyboxModel = glm::rotate(temp, sc_angle, glm::vec3(0, 1, 0)); //why use lighting parameter as angle??
+
+	glm::mat4 skyboxModel = glm::rotate(temp, sc_angle, glm::vec3(0, 1, 0)); 
 	
 
 	glDepthMask(GL_FALSE);
@@ -692,7 +657,7 @@ void paintGL(void)
 	glUniformMatrix4fv(skyboxModelMatrix, 1, GL_FALSE, &skyboxModel[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[i]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture[3]);
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -711,8 +676,8 @@ void paintGL(void)
 	initializeLighting(); //creates all lighting 
 	glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(sceneRotate, 0, -3), // coordinates of camera
-		glm::vec3(sceneRotate, 0, 0), // camera looks at
+		glm::vec3(0, 0.1f, -3), // coordinates of camera
+		glm::vec3(0, 0, 0), // camera looks at
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
 
@@ -757,18 +722,28 @@ void paintGL(void)
 	//-------------------------------------------------------------
 	//spacecraft
 
-	glUniform1i(hasNormalMappingUniformLocation, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-
+	
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
 
-	glm::mat4 ModelObject = glm::scale(temp, glm::vec3(0.0015f, 0.0015f, 0.0015f));
-	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, -1000.0f, 0.0f));
+	glm::mat4 ModelObject = glm::translate(temp, glm::vec3(0.0f, 0.0f, -2.8f));
+	ModelObject = glm::scale(ModelObject, glm::vec3(0.0001f));
 
-	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1,
-		GL_FALSE, &ModelObject[0][0]);
+
+	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelObject[0][0]);
+	
+	glUniform1i(hasNormalMappingUniformLocation, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture[0]);
+
+	for (int i = 0; i < 5; i++) {
+		if (shipRing[i] == true) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture[6]);
+		}
+	}
+
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[0]);
 
 	//-------------------------------------------------------------
@@ -779,13 +754,95 @@ void paintGL(void)
 	glBindVertexArray(wonderStarVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
 
-	glm::mat4 ModelStar = glm::translate(skyboxModel, glm::vec3(objMoveX - 5.0f, 0.0f, objMoveZ));
+	glm::mat4 ModelStar = glm::translate(skyboxModel, glm::vec3(objMoveX - 1.0f, 0.0f, objMoveZ));
 	ModelStar = glm::rotate(ModelStar, glm::radians(10.0f), glm::vec3(0, 0, 1));
 	ModelStar = glm::rotate(ModelStar, (float)M_PI / 2, glm::vec3(1, 0, 0));
 	ModelStar = glm::scale(ModelStar, glm::vec3(0.05f));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelStar[0][0]);
 
 	glDrawArrays(GL_TRIANGLES, 0, drawsize[4]);
+
+	//-------------------------------------------------------------
+	//rings
+	glUniform1i(hasNormalMappingUniformLocation, 0);
+
+	glBindVertexArray(ringVAO);
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
+
+	float ringTranslate = 2.0f;
+	for (int i = 0; i < 4; i++) {
+		glm::mat4 selfRotRing = glm::rotate(temp, ringRotate, glm::vec3(0, 1, 0));
+		selfRotRing = glm::rotate(selfRotRing, (float)M_PI / 2, glm::vec3(0, 0, 1));
+		glm::mat4 translateRing = glm::translate(skyboxModel, glm::vec3(objMoveX - ringTranslate, 0, objMoveZ));
+		glm::mat4 ModelRing = translateRing * selfRotRing;
+		ModelRing = glm::scale(ModelRing, glm::vec3(1.0f / 400));
+
+		if ((objMoveX - ringTranslate) >= -0.2f && (objMoveX - ringTranslate) <= 0.2f && objMoveZ >= -3.0f && objMoveZ <= 2.5f) {
+			shipRing[i] = true;
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture[6]);
+		}
+		else {
+			shipRing[i] = false;
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture[5]);
+		}
+
+		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelRing[0][0]);
+		glDrawArrays(GL_TRIANGLES, 0, drawsize[5]);
+		ringTranslate += 2.0f;
+		
+	}
+
+	//-------------------------------------------------------------
+//  asteroids/rocks
+	int amount = 200;
+	glm::mat4 *modelMatrices = new mat4[amount];
+	srand(1);
+	float radius = 0.2f;
+	float offset = 0.3f;
+	float displacement;
+
+	for (int i = 0; i < amount; i++) {
+		glm::mat4 model;
+		float angle = (float)i / (float)amount * 360.0f;
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float x = sin(angle) * radius + displacement;
+
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float y = displacement * 0.4f + 1;
+
+		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
+		float z = cos(angle) * radius + displacement;
+
+		model = glm::translate(skyboxModel, glm::vec3(objMoveX - x - 0.8f, y-1.15f, objMoveZ - z + 0.5f));
+
+		float scale = (rand() % 10) / 10000.0f + 0.01f;
+		model = glm::scale(model, glm::vec3(scale));
+
+		float rotAngle = (rand() % 360);
+
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+		modelMatrices[i] = model;
+	}
+	glm::mat4 rockTrans = glm::translate(temp, glm::vec3( - 1.0f, 0.0f, 0.0f));
+	glm::mat4 rockOrbit = glm::rotate(rockTrans, rockRotate, glm::vec3(0, 1, 0));
+	//rockOrbit = glm::translate(rockOrbit, glm::vec3(objMoveX - 1.0f, 0.0f, objMoveZ));
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture[7]);
+
+	for (int i = 0; i < amount; i++) {
+		glm::mat4 modelMat = modelMatrices[i] * rockOrbit;
+		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelMat[0][0]);
+		glBindVertexArray(rockVAO);
+		glDrawArrays(GL_TRIANGLES, 0, drawsize[7]);
+
+	}
+
+
+	ringRotate += 0.001f;
+	rockRotate += 0.001f;
 
 
 	glFlush();
