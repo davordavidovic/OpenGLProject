@@ -777,7 +777,7 @@ void paintGL(void)
 		glm::mat4 ModelRing = translateRing * selfRotRing;
 		ModelRing = glm::scale(ModelRing, glm::vec3(1.0f / 400));
 
-		if ((objMoveX - ringTranslate) >= -0.2f && (objMoveX - ringTranslate) <= 0.2f && objMoveZ >= -3.0f && objMoveZ <= 2.5f) {
+		if ((objMoveX - ringTranslate) >= -0.2f && (objMoveX - ringTranslate) <= 0.2f && objMoveZ >= -0.2f && objMoveZ <= 0.2f) {
 			shipRing[i] = true;
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture[6]);
@@ -798,8 +798,8 @@ void paintGL(void)
 //  asteroids/rocks
 	int amount = 200;
 	glm::mat4 *modelMatrices = new mat4[amount];
-	srand(1);
-	float radius = 0.2f;
+	srand(GLUT_ELAPSED_TIME);
+	float radius = 0.2f + amb;
 	float offset = 0.3f;
 	float displacement;
 
@@ -826,9 +826,9 @@ void paintGL(void)
 
 		modelMatrices[i] = model;
 	}
-	glm::mat4 rockTrans = glm::translate(temp, glm::vec3( - 1.0f, 0.0f, 0.0f));
+	glm::mat4 rockTrans = glm::translate(skyboxModel, glm::vec3(+5.0f, 0.0f, 0.0f));
 	glm::mat4 rockOrbit = glm::rotate(rockTrans, rockRotate, glm::vec3(0, 1, 0));
-	//rockOrbit = glm::translate(rockOrbit, glm::vec3(objMoveX - 1.0f, 0.0f, objMoveZ));
+	rockOrbit = glm::translate(rockOrbit, glm::vec3(5.0f, 0.0f, 0));
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[7]);
 
@@ -842,7 +842,7 @@ void paintGL(void)
 
 
 	ringRotate += 0.001f;
-	rockRotate += 0.001f;
+	rockRotate += 0.0008f;
 
 
 	glFlush();
