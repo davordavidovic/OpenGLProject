@@ -37,7 +37,7 @@ float objMoveX = 0.0f, objMoveZ = 0.0f;
 float diff = -0.5f, spec = 100.0f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
 //bool[] shipRing  = ;
-bool shipRing[5] = {false};
+bool shipRing[5] = { false };
 
 float lightx = 0.0f; //macro for light position movement
 float rotateFactor = 0.0f;
@@ -187,7 +187,7 @@ void specialKeyboardFunc(int key, int x, int y) {
 		objMoveX -= sin(sc_angle)*0.05f;
 		objMoveZ += cos(sc_angle)*0.05f;
 	}
-	
+
 
 }
 
@@ -641,8 +641,8 @@ void paintGL(void)
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
 
-	glm::mat4 skyboxModel = glm::rotate(temp, sc_angle, glm::vec3(0, 1, 0)); 
-	
+	glm::mat4 skyboxModel = glm::rotate(temp, sc_angle, glm::vec3(0, 1, 0));
+
 
 	glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgramID);
@@ -711,9 +711,12 @@ void paintGL(void)
 
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
 
-	glm::mat4 ModelEarth = glm::translate(skyboxModel, glm::vec3(objMoveX-10.0f, 0.0f, objMoveZ));
+	float time = glutGet(GLUT_ELAPSED_TIME);
+
+	glm::mat4 ModelEarth = glm::translate(skyboxModel, glm::vec3(objMoveX - 9.0f, 0.0f, objMoveZ));
 	ModelEarth = glm::rotate(ModelEarth, glm::radians(10.0f), glm::vec3(0, 0, 1));
-	ModelEarth = glm::rotate(ModelEarth, (float)M_PI / 2, glm::vec3(1, 0, 0));
+	ModelEarth = glm::rotate(ModelEarth, (float)M_PI / 2, glm::vec3(1.0f, 0.0f, 0.0f));
+	ModelEarth = glm::rotate(ModelEarth, -glm::radians(float(time) * 0.05f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ModelEarth = glm::scale(ModelEarth, glm::vec3(0.05f, 0.05f, 0.05f));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelEarth[0][0]);
 
@@ -722,7 +725,7 @@ void paintGL(void)
 	//-------------------------------------------------------------
 	//spacecraft
 
-	
+
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
 
@@ -731,7 +734,7 @@ void paintGL(void)
 
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelObject[0][0]);
-	
+
 	glUniform1i(hasNormalMappingUniformLocation, 0);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -757,6 +760,7 @@ void paintGL(void)
 	glm::mat4 ModelStar = glm::translate(skyboxModel, glm::vec3(objMoveX - 1.0f, 0.0f, objMoveZ));
 	ModelStar = glm::rotate(ModelStar, glm::radians(10.0f), glm::vec3(0, 0, 1));
 	ModelStar = glm::rotate(ModelStar, (float)M_PI / 2, glm::vec3(1, 0, 0));
+	ModelStar = glm::rotate(ModelStar, glm::radians(float(time) * 0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ModelStar = glm::scale(ModelStar, glm::vec3(0.05f));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelStar[0][0]);
 
@@ -791,7 +795,7 @@ void paintGL(void)
 		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelRing[0][0]);
 		glDrawArrays(GL_TRIANGLES, 0, drawsize[5]);
 		ringTranslate += 2.0f;
-		
+
 	}
 
 	//-------------------------------------------------------------
@@ -815,7 +819,7 @@ void paintGL(void)
 		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
 		float z = cos(angle) * radius + displacement;
 
-		model = glm::translate(skyboxModel, glm::vec3(objMoveX - x - 0.8f, y-1.15f, objMoveZ - z + 0.5f));
+		model = glm::translate(skyboxModel, glm::vec3(objMoveX - x - 0.8f, y - 1.15f, objMoveZ - z + 0.5f));
 
 		float scale = (rand() % 10) / 10000.0f + 0.01f;
 		model = glm::scale(model, glm::vec3(scale));
