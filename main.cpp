@@ -30,14 +30,21 @@ using namespace std;
 using glm::vec3;
 using glm::mat4;
 
-
+const double EULER = 2.71828182845904523536;
 glm::mat4 temp = glm::mat4(1.0f); //a utility identity matrix
-float sceneRotate = 0.0f, ringRotate = 0.0f, rockRotate = 0.0f;
+float sceneRotate = 0.0f, ringRotate = 0.0f, rockRotate = 0.0f, rockExpand = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
 float diff = -0.5f, spec = 100.0f, amb = 0.0f; //macros for diffuse and specular brightness
 float mMoverx = 0.0f, mMovery = 0.0f;
-//bool[] shipRing  = ;
 bool shipRing[5] = { false };
+bool shipStar = false, shipEarth = false, shipCollide = false;
+float shipTilt = 0.0f;
+float speed = 0.0f;
+float acc = pow(EULER, (speed - 6));
+
+const int amount = 200;
+glm::mat4 *modelMatrices = new mat4[amount];
+bool renderRock[amount] = { true };
 
 float lightx = 0.0f; //macro for light position movement
 float rotateFactor = 0.0f;
@@ -81,6 +88,7 @@ bool checkStatus(
 	}
 	return true;
 }
+
 
 bool checkShaderStatus(GLuint shaderID)
 {
@@ -172,20 +180,27 @@ void installShaders()
 void specialKeyboardFunc(int key, int x, int y) {
 
 	if (key == GLUT_KEY_UP) {
-		objMoveX += cos(sc_angle)*0.05f;
-		objMoveZ += sin(sc_angle)*0.05f;
+		objMoveX += cos(sc_angle)*0.03f;
+		objMoveZ += sin(sc_angle)*0.03f;
+		//cout << "movez x:\n" << objMoveX;
+		//cout << "movez z:\n" << objMoveZ;
+
 	}
 	else if (key == GLUT_KEY_DOWN) {
-		objMoveX -= cos(sc_angle)*0.05f;
-		objMoveZ -= sin(sc_angle)*0.05f;
+		objMoveX -= cos(sc_angle)*0.03f;
+		objMoveZ -= sin(sc_angle)*0.03f;
+		//cout << "movez x:\n" << objMoveX;
+		//cout << "movez z:\n" << objMoveZ;
 	}
 	else if (key == GLUT_KEY_LEFT) {
-		objMoveX += sin(sc_angle)*0.05f;
-		objMoveZ -= cos(sc_angle)*0.05f;
+		objMoveX += sin(sc_angle)*0.03f;
+		objMoveZ -= cos(sc_angle)*0.03f;
+		shipTilt -= 0.01f;
 	}
 	else if (key == GLUT_KEY_RIGHT) {
-		objMoveX -= sin(sc_angle)*0.05f;
-		objMoveZ += cos(sc_angle)*0.05f;
+		objMoveX -= sin(sc_angle)*0.03f;
+		objMoveZ += cos(sc_angle)*0.03f;
+		shipTilt += 0.01f;
 	}
 
 
@@ -676,7 +691,7 @@ void paintGL(void)
 	initializeLighting(); //creates all lighting 
 	glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0.1f, -3), // coordinates of camera
+		glm::vec3(0, 0, -3), // coordinates of camera
 		glm::vec3(0, 0, 0), // camera looks at
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
@@ -720,7 +735,14 @@ void paintGL(void)
 	ModelEarth = glm::scale(ModelEarth, glm::vec3(0.05f, 0.05f, 0.05f));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelEarth[0][0]);
 
-	glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
+	if ((objMoveX - 9.0f) >= -0.2f && (objMoveX - 9.0f) <= 0.2f && objMoveZ >= -0.2f && objMoveZ <= 0.2f) {
+		shipEarth = true;
+	}
+	else if (!shipEarth) {
+		glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
+
+
+	}
 
 	//-------------------------------------------------------------
 	//spacecraft
@@ -728,8 +750,11 @@ void paintGL(void)
 
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
-
+	float shipBounce = GLUT_ELAPSED_TIME;
+	float shipTurn = 0.5f / (1 + pow(EULER, -20*(shipTilt))) - 0.25f;
 	glm::mat4 ModelObject = glm::translate(temp, glm::vec3(0.0f, 0.0f, -2.8f));
+	ModelObject = glm::rotate(ModelObject, shipTurn, vec3(0, 0, 1));
+	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, 0.0f, -0.005));
 	ModelObject = glm::scale(ModelObject, glm::vec3(0.0001f));
 
 
@@ -744,6 +769,17 @@ void paintGL(void)
 		if (shipRing[i] == true) {
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture[6]);
+		}
+	}
+
+	if (shipCollide) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture[6]);
+		shipCollide = false;
+		for (int c = 1; c <= 1000; c++) {    //do nothing for several seconds
+			for (int d = 1; d <= 1000; d++) {
+
+			}
 		}
 	}
 
@@ -763,8 +799,12 @@ void paintGL(void)
 	ModelStar = glm::rotate(ModelStar, glm::radians(float(time) * 0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ModelStar = glm::scale(ModelStar, glm::vec3(0.05f));
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelStar[0][0]);
-
-	glDrawArrays(GL_TRIANGLES, 0, drawsize[4]);
+	if ((objMoveX - 1.0f) >= -0.2f && (objMoveX - 1.0f) <= 0.2f && objMoveZ >= -0.2f && objMoveZ <= 0.2f) {
+		shipStar = true;
+	}
+	else if(!shipStar){
+		glDrawArrays(GL_TRIANGLES, 0, drawsize[4]);
+	}
 
 	//-------------------------------------------------------------
 	//rings
@@ -800,10 +840,12 @@ void paintGL(void)
 
 	//-------------------------------------------------------------
 //  asteroids/rocks
-	int amount = 200;
-	glm::mat4 *modelMatrices = new mat4[amount];
+
+	float posx[amount];
+	float posy[amount];
+	float posz[amount];
 	srand(GLUT_ELAPSED_TIME);
-	float radius = 0.2f + amb;
+	float radius = 0.2f + sin(rockExpand/6)/5;
 	float offset = 0.3f;
 	float displacement;
 
@@ -818,8 +860,11 @@ void paintGL(void)
 
 		displacement = (rand() % (int)(2 * offset * 200)) / 100.0f - offset;
 		float z = cos(angle) * radius + displacement;
+		posx[i] = objMoveX - x - 0.8f;
+		posy[i] = y - 1.15f;
+		posz[i] = objMoveZ - z + 0.5f;
 
-		model = glm::translate(skyboxModel, glm::vec3(objMoveX - x - 0.8f, y - 1.15f, objMoveZ - z + 0.5f));
+		model = glm::translate(skyboxModel, glm::vec3(posx[i], posy[i], posz[i]));
 
 		float scale = (rand() % 10) / 10000.0f + 0.01f;
 		model = glm::scale(model, glm::vec3(scale));
@@ -828,25 +873,38 @@ void paintGL(void)
 
 		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 
+
 		modelMatrices[i] = model;
 	}
-	glm::mat4 rockTrans = glm::translate(skyboxModel, glm::vec3(+5.0f, 0.0f, 0.0f));
+	glm::mat4 rockTrans = glm::translate(temp, glm::vec3(+0.0f, 0.0f, 0.0f));
 	glm::mat4 rockOrbit = glm::rotate(rockTrans, rockRotate, glm::vec3(0, 1, 0));
-	rockOrbit = glm::translate(rockOrbit, glm::vec3(5.0f, 0.0f, 0));
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[7]);
 
 	for (int i = 0; i < amount; i++) {
-		glm::mat4 modelMat = modelMatrices[i] * rockOrbit;
-		glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelMat[0][0]);
-		glBindVertexArray(rockVAO);
-		glDrawArrays(GL_TRIANGLES, 0, drawsize[7]);
+		if (posx[i] >= -0.05f && posx[i] <= 0.05f && posy[i] >= 0.0f && posy[i] <= 0.05f && posz[i] >= -0.05f && posz[i] <= 0.05f && renderRock[i]) {
+			renderRock[i] = false;
+			cout << "x position: " << posx[i];
+			cout << "y position: " << posy[i];
+			cout << "z position: " << posz[i];
+			shipCollide = true;
+		}
+
+		if (renderRock[i] == true) {
+			glm::mat4 modelMat = modelMatrices[i] * rockOrbit;
+			glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &modelMat[0][0]);
+			glBindVertexArray(rockVAO);
+			glDrawArrays(GL_TRIANGLES, 0, drawsize[7]);
+		}
+
+		//glm::mat4 ModelObject = glm::translate(temp, glm::vec3(0.0f, 0.0f, -2.8f));
+		//(objMoveX - ringTranslate) >= -0.2f && (objMoveX - ringTranslate) <= 0.2f && objMoveZ >= -0.2f && objMoveZ <= 0.2f)
 
 	}
 
-
 	ringRotate += 0.001f;
 	rockRotate += 0.0008f;
+	rockExpand += 0.001f;
 
 
 	glFlush();
@@ -868,6 +926,9 @@ int main(int argc, char *argv[])
 	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Assignment 2");
+	for (int i = 0; i < amount; i++) {
+		renderRock[i] = true;
+	}
 
 	initializedGL();
 	glutDisplayFunc(paintGL);
