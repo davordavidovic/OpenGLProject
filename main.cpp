@@ -28,13 +28,15 @@ Student Name: Davor Davidovikj			Student Name: Chu Chao Ying
 #define SCREEN_HEIGHT 600
 using namespace std;
 using glm::vec3;
+using glm::vec4;
 using glm::mat4;
 
 const double EULER = 2.71828182845904523536;
 glm::mat4 temp = glm::mat4(1.0f); //a utility identity matrix
 float sceneRotate = 0.0f, ringRotate = 0.0f, rockRotate = 0.0f, rockExpand = 0.0f;
 float objMoveX = 0.0f, objMoveZ = 0.0f;
-float diff = -0.5f, spec = 100.0f, amb = 0.0f; //macros for diffuse and specular brightness
+float diff = 0.6f, spec = 100.0f, amb = 0.0f; //macros for diffuse and specular brightness
+float diff2 = 0.2f, spec2 = 20.f; //macros for second light
 float mMoverx = 0.0f, mMovery = 0.0f;
 bool shipRing[5] = { false };
 bool shipStar = false, shipEarth = false, shipCollide = false;
@@ -213,57 +215,87 @@ void keyboard(unsigned char key, int x, int y)
 		sceneRotate -= 1.0f;
 		cout << sceneRotate;
 	}
+
 	if (key == 'd' || key == 'D')
 	{
 		sceneRotate += 1.0f;
 	}
+
 	if (key == 'c' || key == 'C')
 	{
 		lightx -= 50.0f;
 		cout << lightx;
 	}
+
 	if (key == 'v' || key == 'V')
 	{
 		lightx += 50.0f;
 	}
+
+	//--------------------diffuse light control--------------------
 	if (key == 'q' || key == 'Q')
 	{
-		if (diff > -1.0f) {
+		if (diff > 0.0f) {
 			diff -= 0.05f;
 		}
 	}
+
 	if (key == 'w' || key == 'W')
 	{
-		if (diff < 0.0f) {
+		if (diff < 1.0f) {
 			diff += 0.05f;
 		}
-
 	}
 
+	if (key == 'e' || key == 'e')
+	{
+		if (diff2 > 0.0f) {
+			diff2 -= 0.05f;
+		}
+	}
+
+	if (key == 'r' || key == 'R')
+	{
+		if (diff2 < 1.0f) {
+			diff2 += 0.05f;
+		}
+	}
+
+	//--------------------specular light control-------------------
 	if (key == 'z' || key == 'Z')
 	{
-		spec += 1;
+		spec += 2;
 	}
+
+	if (key == 'x' || key == 'X')
+	{
+		if (spec > 2) {
+			spec -= 2;
+		}
+	}
+
+	if (key == 'k' || key == 'K')
+	{
+		spec2 += 2;
+	}
+
+	if (key == 'l' || key == 'L')
+	{
+		if (spec2 > 2) {
+			spec2 -= 2;
+		}
+	}
+
+	//--------------------ambient light control--------------------
 	if (key == 'm' || key == 'M')
 	{
-
 		amb += 0.01f;
-
 	}
+
 	if (key == 'n' || key == 'N')
 	{
 		amb -= 0.01f;
-
 	}
-	if (key == 'x' || key == 'X')
-	{
-		if (spec > 1) {
-			spec -= 1;
-		}
-
-	}
-
-
 }
 
 void move(int button, int state, int x, int y)
@@ -620,9 +652,14 @@ void sendDataToOpenGL()
 
 void initializeLighting() {
 
-	GLint ambientLightUniformLocation = glGetUniformLocation(programID, "ambientLight");
-	vec3 ambientLight(0.6f, 0.6f, 0.6f);
-	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+	vec4 lightColor(0.9f, 0.9f, 0.9f, 1.0f);
+	vec4 lightColor2(1.0f, 0.0f, 0.0f, 1.0f);
+
+	GLint lightColorUniformLocation = glGetUniformLocation(programID, "lightColor");
+	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
+
+	GLint lightColor2UniformLocation = glGetUniformLocation(programID, "lightColor2");
+	glUniform4fv(lightColor2UniformLocation, 1, &lightColor2[0]);
 
 	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
 	vec3 eyePosition(1.0f, 1.0f, 1.0f);
@@ -632,12 +669,21 @@ void initializeLighting() {
 	vec3 lightPosition(lightx, 1.0f, -3.0f);
 	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
 
+	GLint lightPosition2UniformLocation = glGetUniformLocation(programID, "lightPositionWorld2");
+	vec3 lightPosition2(0.0f, 5.0f, 0.0f);
+	glUniform3fv(lightPosition2UniformLocation, 1, &lightPosition2[0]);
+
 	GLint diffuseBrightness = glGetUniformLocation(programID, "diffuseBrightness");
 	glUniform1f(diffuseBrightness, diff);
+
+	GLint diffuseBrightness2 = glGetUniformLocation(programID, "diffuseBrightness2");
+	glUniform1f(diffuseBrightness2, diff2);
 
 	GLint specularBrightness = glGetUniformLocation(programID, "specularBrightness");
 	glUniform1f(specularBrightness, spec);
 
+	GLint specularBrightness2 = glGetUniformLocation(programID, "specularBrightness2");
+	glUniform1f(specularBrightness2, spec2);
 }
 
 
@@ -747,11 +793,10 @@ void paintGL(void)
 	//-------------------------------------------------------------
 	//spacecraft
 
-
 	glBindVertexArray(spaceCraftVAO);
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
 	float shipBounce = GLUT_ELAPSED_TIME;
-	float shipTurn = 0.5f / (1 + pow(EULER, -20*(shipTilt))) - 0.25f;
+	float shipTurn = 0.5f / (1 + pow(EULER, -20 * (shipTilt))) - 0.25f;
 	glm::mat4 ModelObject = glm::translate(temp, glm::vec3(0.0f, 0.0f, -2.8f));
 	ModelObject = glm::rotate(ModelObject, shipTurn, vec3(0, 0, 1));
 	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, 0.0f, -0.005));
@@ -787,6 +832,7 @@ void paintGL(void)
 
 	//-------------------------------------------------------------
 	//wonderStar
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[4]);
 
@@ -802,12 +848,13 @@ void paintGL(void)
 	if ((objMoveX - 1.0f) >= -0.2f && (objMoveX - 1.0f) <= 0.2f && objMoveZ >= -0.2f && objMoveZ <= 0.2f) {
 		shipStar = true;
 	}
-	else if(!shipStar){
+	else if (!shipStar) {
 		glDrawArrays(GL_TRIANGLES, 0, drawsize[4]);
 	}
 
 	//-------------------------------------------------------------
 	//rings
+
 	glUniform1i(hasNormalMappingUniformLocation, 0);
 
 	glBindVertexArray(ringVAO);
@@ -839,13 +886,13 @@ void paintGL(void)
 	}
 
 	//-------------------------------------------------------------
-//  asteroids/rocks
+	//  asteroids/rocks
 
 	float posx[amount];
 	float posy[amount];
 	float posz[amount];
 	srand(GLUT_ELAPSED_TIME);
-	float radius = 0.2f + sin(rockExpand/6)/5;
+	float radius = 0.2f + sin(rockExpand / 6) / 5;
 	float offset = 0.3f;
 	float displacement;
 
