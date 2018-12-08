@@ -23,9 +23,11 @@ uniform int hasNormalMapping;
 
 void main()
 {
+	vec3 normal = normalWorld;
+
 	if (hasNormalMapping == 1) {
-		vec3 normal = texture(textureSampler2, uv).rgb;
-		normal = normalize(normal * 2.0 - 1.0);
+		normal = texture(textureSampler2, uv).rgb;
+		normal = normal * 2.0 - 1.0;
 	}
 
 	//ambient
@@ -38,16 +40,16 @@ void main()
 
 	//diffuse
 	vec3 lightVectorWorld = normalize(lightPositionWorld - vertexPositionWorld);
-	float brightness = dot(lightVectorWorld, normalize(normalWorld)) * diffuseBrightness;
+	float brightness = dot(lightVectorWorld, normalize(normal)) * diffuseBrightness;
 	vec4 diffuseLight = vec4(brightness, brightness, brightness, 1.0) * lightColor;
 	
 	//diffuse (light2)
 	vec3 lightVectorWorld2 = normalize(lightPositionWorld2 - vertexPositionWorld);
-	float brightness2 = dot(lightVectorWorld2, normalize(normalWorld)) * diffuseBrightness2;
+	float brightness2 = dot(lightVectorWorld2, normalize(normal)) * diffuseBrightness2;
 	vec4 diffuseLight2 = vec4(brightness2, brightness2, brightness2, 1.0) * lightColor2;
 
 	//specular
-	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalWorld);
+	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normal);
 	vec3 eyeVectorWorld = normalize(eyePositionWorld - vertexPositionWorld);
 	float s = clamp(dot(reflectedLightVectorWorld, eyeVectorWorld), 0, 1);
 	float s1 = pow(s, specularBrightness);

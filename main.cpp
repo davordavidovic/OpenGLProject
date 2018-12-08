@@ -695,6 +695,7 @@ void paintGL(void)
 
 	//-------------------------------------------------------------
 	//skybox
+
 	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 skyboxView = glm::lookAt(
 		glm::vec3(0.1f, 0, 0), // coordinates of camera
@@ -758,7 +759,6 @@ void paintGL(void)
 	//-------------------------------------------------------------
 	//earth
 
-	//TODO: bump mapping
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
 	glUniform1i(TextureID_0, 0);
@@ -786,8 +786,6 @@ void paintGL(void)
 	}
 	else if (!shipEarth) {
 		glDrawArrays(GL_TRIANGLES, 0, drawsize[1]);
-
-
 	}
 
 	//-------------------------------------------------------------
@@ -802,9 +800,7 @@ void paintGL(void)
 	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, 0.0f, -0.005));
 	ModelObject = glm::scale(ModelObject, glm::vec3(0.0001f));
 
-
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelObject[0][0]);
-
 	glUniform1i(hasNormalMappingUniformLocation, 0);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -886,7 +882,7 @@ void paintGL(void)
 	}
 
 	//-------------------------------------------------------------
-	//  asteroids/rocks
+	//asteroids/rocks
 
 	float posx[amount];
 	float posy[amount];
