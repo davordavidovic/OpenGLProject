@@ -290,11 +290,14 @@ void keyboard(unsigned char key, int x, int y)
 	if (key == 'm' || key == 'M')
 	{
 		amb += 0.01f;
+		cout << amb;
 	}
 
 	if (key == 'n' || key == 'N')
 	{
 		amb -= 0.01f;
+		cout << amb;
+
 	}
 }
 
@@ -698,8 +701,8 @@ void paintGL(void)
 
 	glm::mat4 skyboxProj = glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 skyboxView = glm::lookAt(
-		glm::vec3(0.1f, 0, 0), // coordinates of camera
-		glm::vec3(0, 0, 0), // camera looks at origin
+		glm::vec3(0.1f, 0.13f, 0), // coordinates of camera
+		glm::vec3(0, 0.1f, 0), // camera looks at origin
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
 
@@ -738,8 +741,8 @@ void paintGL(void)
 	initializeLighting(); //creates all lighting 
 	glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.1f, 20.0f); //perspective projection used
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0, -3), // coordinates of camera
-		glm::vec3(0, 0, 0), // camera looks at
+		glm::vec3(0, 0.1f, -3), // coordinates of camera
+		glm::vec3(0, 0.1f, 0), // camera looks at
 		glm::vec3(0, 1, 0)  // head is straight up
 	);
 
@@ -792,12 +795,11 @@ void paintGL(void)
 	//spacecraft
 
 	glBindVertexArray(spaceCraftVAO);
-	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &View[0][0]);
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, &skyboxView[0][0]);
 	float shipBounce = GLUT_ELAPSED_TIME;
-	float shipTurn = 0.5f / (1 + pow(EULER, -20 * (shipTilt))) - 0.25f;
-	glm::mat4 ModelObject = glm::translate(temp, glm::vec3(0.0f, 0.0f, -2.8f));
-	ModelObject = glm::rotate(ModelObject, shipTurn, vec3(0, 0, 1));
-	ModelObject = glm::translate(ModelObject, glm::vec3(0.0f, 0.0f, -0.005));
+	glm::mat4 ModelObject = glm::translate(temp, glm::vec3(-0.06f, 0.0f, 0.0f));
+	ModelObject = glm::rotate(ModelObject, (float)-M_PI/2.0f, vec3(0, 1, 0));
+	ModelObject = glm::rotate(ModelObject, 0.18f, vec3(1, 0, 0));
 	ModelObject = glm::scale(ModelObject, glm::vec3(0.0001f));
 
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &ModelObject[0][0]);
